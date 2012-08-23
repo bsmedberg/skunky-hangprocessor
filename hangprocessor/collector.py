@@ -87,9 +87,9 @@ class submit(object):
         queueitempath = os.path.join(processor_queue_path, crashid)
 
         try:
-            self.writefiles(crashid, dumpmap, theform)
+            self.writefiles(dumpdir, dumpmap, theform)
             os.symlink(dumpdir, queueitempath)
-        except (OSError, IOError):
+        except:
             shutil.rmtree(dumpdir, ignore_errors=True)
             raise web.webapi.InternalError("I/O error")
 
