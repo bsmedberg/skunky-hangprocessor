@@ -7,15 +7,9 @@ import os
 import datetime
 import uuid
 import json
+from config import getconfig
 
-minidump_storage_path = '/home/bsmedberg/hangprocessor/minidumps'
-processor_queue_path = '/home/bsmedberg/hangprocessor/processorqueue'
-
-if not os.path.isabs(minidump_storage_path) or not os.path.exists(minidump_storage_path):
-    raise Exception("Minidump storage path doesn't exist yet")
-
-if not os.path.isabs(processor_queue_path) or not os.path.exists(processor_queue_path):
-    raise Exception("Processor queue path doesn't exist yet")
+config = None
 
 urls = (
   '/', 'goaway',
@@ -34,7 +28,9 @@ class goaway(object):
 
 class submit(object):
     def GET(self):
-        # return goaway.GET()
+        if not config.collector_expose_testform:
+            return goaway.GET()
+
         return """<!DOCTYPE html>
 <head>
   <title>Minidump Upload</title>
@@ -82,9 +78,9 @@ class submit(object):
                 del theform[key]
 
         crashid = makeuuid(t)
-        dumpdir = os.path.join(minidump_storage_path, str(t.year),
+        dumpdir = os.path.join(config.minidump_storage_path, str(t.year),
                                t.strftime('%m-%d'), crashid)
-        queueitempath = os.path.join(processor_queue_path, crashid)
+        queueitempath = os.path.join(config.processor_queue_path, crashid)
 
         try:
             self.writefiles(dumpdir, dumpmap, theform)
@@ -95,6 +91,11 @@ class submit(object):
 
         return "CrashID=%s" % crashid
 
+def getapp():
+    return web.application(urls, globals())
+
 if __name__ == '__main__':
-    app = web.application(urls, globals())
-    app.run()
+    config = getconfig()
+    app = getapp()
+    web.httpserver.runsimple(app.wsgifunc(),
+                             (config.collector_addr, config.collector_port))
