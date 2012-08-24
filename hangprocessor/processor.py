@@ -39,7 +39,7 @@ class Processor(object):
 
         for dump in dumps:
             dumpfile = os.path.join(dumpdir, 'minidump_%s.dmp' % dump)
-            processsingle(dumpfile)
+            self.processsingle(dumpfile)
 
     def searchandprocess(self):
         print "[%s] Searching for new records to process" % (time.asctime())
@@ -64,7 +64,7 @@ class Processor(object):
                 continue
 
             try:
-                process(dumpdir)
+                self.process(dumpdir)
             except KeyboardInterrupt:
                 raise
             except Exception as e:
@@ -80,7 +80,7 @@ class Processor(object):
                 time.sleep(lasttime + self.config.processor_wakeinterval - time.time())
             lasttime = time.time()
             try:
-                searchandprocess()
+                self.searchandprocess()
             except KeyboardInterrupt:
                 raise
             except Exception as e:
