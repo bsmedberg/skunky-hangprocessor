@@ -2,40 +2,35 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import web
+import cherrypy
 import os
 import datetime
 import uuid
 import json
 from config import getconfig
-
-config = None
-
-urls = (
-  '/', 'goaway',
-  '/submit', 'submit'
-)
+import cgi
+import tempfile
+import shutil
 
 def makeuuid(d):
     u = uuid.uuid4()
     return 'hr-%s-%s' % (d.strftime('%Y%m%d'), u)
 
-class goaway(object):
-    @staticmethod
-    def GET():
-        web.notfound()
-        return '<head><title>Wrong server</title><body><p>This is not the droid you are looking for. Perhaps <a href="http://crash-stats.mozilla.com/">crash-stats.mozilla.com</a> is what you wanted?'
+class Collector(object):
+    def __init__(self, config):
+        self.config = config
 
-class submit(object):
-    def GET(self):
+    @cherrypy.expose
+    def index(self):
         if not config.collector_expose_testform:
-            return goaway.GET()
+            cherrypy.HTTPError(404).set_response()
+            return '<head><title>Wrong server</title><body><p>This is not the droid you are looking for. Perhaps <a href="http://crash-stats.mozilla.com/">crash-stats.mozilla.com</a> is what you wanted?'
 
         return """<!DOCTYPE html>
 <head>
   <title>Minidump Upload</title>
 <body>
-  <form action="" method="POST" enctype="multipart/form-data">
+  <form action="submit" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="hiddentest" value="Isunicode?">
     <input type="hidden" name="additional_minidumps" value="browser,flashsandbox">
     <p>Plugin&nbsp;minidump:&nbsp;<input type="file" name="upload_file_minidump">
@@ -52,30 +47,39 @@ class submit(object):
 
         os.makedirs(dumpdir)
         
-        for name, data in dumpmap.items():
+        for name, fs in dumpmap.items():
             dump = os.path.join(dumpdir, 'minidump_%s.dmp' % name)
-            fd = open(dump, 'wb')
-            fd.write(data)
-            fd.close()
+            outfd = open(dump, 'wb')
+            shutil.copyfileobj(fs.file, outfd)
+            outfd.close()
 
         jsonpath = os.path.join(dumpdir, 'extra.json')
         fd = open(jsonpath, 'wb')
         json.dump(theform, fd)
         fd.close()
 
-    def POST(self):
+    @cherrypy.expose
+    def submit(self, **kwargs):
+        # Note: GET and POST args are mixed in kwargs. body.params contains
+        # only the POST fields.
+        if cherrypy.request.method.upper() != 'POST':
+            raise cherrypy.HTTPRedirect(cherrypy.url('/'))
+
+        theform = dict(cherrypy.request.body.params)
+
         t = datetime.datetime.utcnow()
-        theform = web.input()
 
         dumpmap = {'plugin': theform['upload_file_minidump']}
         if 'additional_minidumps' in theform:
-            extras = theform.additional_minidumps.split(',')
+            extras = theform['additional_minidumps'].split(',')
             for extra in extras:
                 dumpmap[extra] = theform['upload_file_minidump_%s' % extra]
                 
-        for (key, value) in web.webapi.rawinput().iteritems():
-            if hasattr(value, 'file') and hasattr(value, 'value'):
+        for (key, value) in theform.items():
+            if hasattr(value, 'file'):
                 del theform[key]
+
+        theform['submitted_timestamp'] = t.isoformat()
 
         crashid = makeuuid(t)
         dumpdir = os.path.join(config.minidump_storage_path, str(t.year),
@@ -87,15 +91,13 @@ class submit(object):
             os.symlink(dumpdir, queueitempath)
         except:
             shutil.rmtree(dumpdir, ignore_errors=True)
-            raise web.webapi.InternalError("I/O error")
+            raise
 
         return "CrashID=%s" % crashid
 
-def getapp():
-    return web.application(urls, globals())
-
 if __name__ == '__main__':
     config = getconfig()
-    app = getapp()
-    web.httpserver.runsimple(app.wsgifunc(),
-                             (config.collector_addr, config.collector_port))
+    app = Collector(config)
+    cherryconfig = {'global': {'server.socket_host': config.collector_addr,
+                               'server.socket_port': config.collector_port}}
+    cherrypy.quickstart(app, config=cherryconfig)
