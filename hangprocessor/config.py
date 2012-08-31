@@ -38,6 +38,14 @@ opts.add_option(
     default=8080,
     doc='Port for the collector to run on.')
 opts.add_option(
+    'collector_error_log',
+    default='/dev/null',
+    doc='Absolute path to the collector error log file.')
+opts.add_option(
+    'collector_access_log',
+    default='/dev/null',
+    doc='Absolute path to the collector access log file.')
+opts.add_option(
     'processor_wakeinterval',
     default=30,
     doc='Wake up every N seconds to process new reports.')

@@ -65,7 +65,11 @@ class Collector(object):
         if cherrypy.request.method.upper() != 'POST':
             raise cherrypy.HTTPRedirect(cherrypy.url('/'))
 
-        theform = dict(cherrypy.request.body.params)
+        # Cherrypy 3.1 compat
+        if hasattr(cherrypy.request.body, 'params'):
+            theform = dict(cherrypy.request.body.params)
+        else:
+            theform = dict(cherrypy.request.body_params)
 
         t = datetime.datetime.utcnow()
 
@@ -93,11 +97,14 @@ class Collector(object):
             shutil.rmtree(dumpdir, ignore_errors=True)
             raise
 
-        return "CrashID=%s" % crashid
+        return "CrashID=bp-%s" % crashid
 
 if __name__ == '__main__':
     config = getconfig()
     app = Collector(config)
     cherryconfig = {'global': {'server.socket_host': config.collector_addr,
-                               'server.socket_port': config.collector_port}}
+                               'server.socket_port': config.collector_port,
+                               'log.screen': False,
+                               'log.access_file': config.collector_access_log,
+                               'log.error_file': config.collector_error_log}}
     cherrypy.quickstart(app, config=cherryconfig)
