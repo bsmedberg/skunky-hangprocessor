@@ -23,8 +23,8 @@ class Collector(object):
     @cherrypy.expose
     def index(self):
         if not config.collector_expose_testform:
-            cherrypy.HTTPError(404).set_response()
-            return '<head><title>Wrong server</title><body><p>This is not the droid you are looking for. Perhaps <a href="http://crash-stats.mozilla.com/">crash-stats.mozilla.com</a> is what you wanted?'
+            cherrypy.response.status = 404
+            return '<head><title>Wrong server</title><link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAArhJREFUeNqUU19IU1Ec/jY3ZLrN1JBCAyUfphBaQpCYUGkPitmDFEoUWPZSGf55EXsLM0QopbdW9KBEEGQoFkX1YBY41BSRpS3TXd0Y2+62O7e73etO59w226SXPjjnd8/5fffjO7/zOyr8A3WNTWNiMNAoiiKi0QjEiGxeWpxt28sjhEDNPm51dJPkRDiW3njhynXUNjShyFSObTntWnI+ma9hk+AP7CYHz6BXEkZdfvNonobSSlXA8YNwqfPR2/UefXv5Kjadb7pIYjE1qrzPrbn7YSou0MKgI7sEQVRh1S7B44b1c06zSa2OYezlCxU7guJgbW29p86w0F914oCpIH8f5B12PjriAll0KiwGOI438V9fYVIo70lxQJE9UA1ve9clxPTZkIMOECn016Y2AxpdLuSwBPPwU3R+QA7d5hUHl1vbrkaRbo6tPgI3MQIxcx+MpaehyyuGhvmLAQGHHV7ra2xzTkgS0Nx606tFhBX2iUav15t5ITJOxRqMZ2/jcNlRzD8bhLxsQZizI7voECRtFo51PMSPT1+Ax8NQkdi43qA3MwHmsIKOwv6TID+H6ok0N0jm+moI2Rghb89BiZa7NWRnfoDM3Ksn96uV0hSy/xJFnGUq6jRabYcNwlYu/Js2RO3fEJahRN5uQ4BbBM/ZFB7Fr/j400hKQ6ghOJ1OBB3LCPIeKmZFhN5GkEbB50HQaYXb5VR4yU2lCJyqrW+x4AhZ2vBR4iqikoyQ1wWJFjDEuxCJyPBw37Hl9WGG8hg/RcCQqRv1GcuMDyyonpzyi2t8CO6NBezQS3avL2AzGMKbKUEconmfoczI+CkCRqMB3PpKCydguvsdKq0+3JmYjqw4qYNxGlfouucjKlme8Rg/BTfaO1llM5K2WKOUxG+oJL5OICPOV15jAhX4P1QkBH4LMADYK1S5qnGrYAAAAABJRU5ErkJggg==" rel="icon"><body><p>This is not the droid you are looking for. Perhaps <a href="http://crash-stats.mozilla.com/">crash-stats.mozilla.com</a> is what you wanted?'
 
         return """<!DOCTYPE html>
 <head>
