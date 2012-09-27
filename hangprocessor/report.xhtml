@@ -1,0 +1,61 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+<head>
+  <title>Hang report ${id}</title>
+  <link rel="stylesheet" type="text/css" href="http://crash-analysis.mozilla.com/hang-reports/style.css" />
+  <style type="text/css">
+    body {
+      font-family: sans-serif;
+    }
+    table.data {
+      border: 1px solid #333;
+      border-spacing: 0px;
+      border-collapse: collapse;
+    }
+    table.data td, table.data th {
+      border: 1px solid #999;
+      padding: 1px;
+    }
+    table.data th {
+      text-align: left;
+      background-color: #EEE;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hang report ${id}</h1>
+
+  <section>
+    <h2>Metadata</h2>
+
+    <table class="data">
+      <tbody>
+	<tr py:for="k in whitelist.intersection(extra.iterkeys())">
+	  <th>${k}</th>
+	  <td>${extra[k]}</td>
+	</tr>
+      </tbody>
+    </table>
+
+    <p>Hidden metadata: ${','.join(set(extra.iterkeys()).difference(whitelist)) or '&lt;none&gt;'}</p>
+  </section>
+
+  <section py:def="displaydump(name, dump)">
+    <h3>Dump: ${name}</h3>
+    <p class="error" py:if="dump['error']">Error processing dump:</p>
+    <pre class="dumpdata">${dump['data']}</pre>
+  </section>
+
+  <section>
+    <h2>Dumps</h2>
+
+    ${displaydump('plugin', dumps['plugin'])}
+    <py:for each="key in set(dumps.iterkeys()).difference(('plugin',))">
+      ${displaydump(key, dumps[key])}
+    </py:for>
+  </section>
+
+  <p><a href="http://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
+
+</body>
+</html>
