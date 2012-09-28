@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import time
+import .report
 
 class Processor(object):
     def __init__(self, config):
@@ -40,6 +41,23 @@ class Processor(object):
         for dump in dumps:
             dumpfile = os.path.join(dumpdir, 'minidump_%s.dmp' % dump)
             self.processsingle(dumpfile)
+
+        reportFile = os.path.join(dumpdir, 'report.html')
+        fd = open(reportFile, 'w')
+        fd.write(report.generateReport(dumpdir))
+        fd.close()
+
+        if self.config.reporting_server and self.config.reporting_directory:
+            uuid = os.path.basename(dumpdir)
+            year = uuid[3:7]
+            month = uuid[7:9]
+            day = uuid[9:11]
+            remoteDir = os.path.join(self.config.reporting_directory, year, '%s-%s' % (month, day))
+            remoteFile = os.path.join(remoteDir, uuid = '.html')
+
+            fd = open(reportFile)
+            subprocess.check_call(['ssh', self.config.reporting_server, 'mkdir', '-p', 'remoteDir', '&&', 'cat', '>', remoteFile], stdin=fd)
+            fd.close()
 
     def searchandprocess(self):
         print "[%s] Searching for new records to process" % (time.asctime())

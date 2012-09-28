@@ -49,6 +49,14 @@ opts.add_option(
     'processor_wakeinterval',
     default=30,
     doc='Wake up every N seconds to process new reports.')
+opts.add_option(
+    'reporting_server',
+    default='',
+    doc='Server name which will see the final reports')
+opts.add_option(
+    'reporting_directory',
+    default='',
+    doc='Directory on reporting_server which will hold the final reports')
 
 def _validate_single_dir(p, name):
     if not os.path.isabs(p):
