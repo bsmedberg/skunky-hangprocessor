@@ -8,5 +8,6 @@ for dir in dirs:
     for dumpdir, dirnames, filenames in os.walk(dir):
         if 'extra.json' in filenames:
             queuefile = os.path.join(queuedir, os.path.basename(dumpdir))
-            os.symlink(dumpdir, queuefile)
-            
+            if not os.path.exists(queuefile):
+                os.symlink(dumpdir, queuefile)
+
