@@ -104,6 +104,7 @@ if __name__ == '__main__':
     app = Collector(config)
     cherryconfig = {'global': {'server.socket_host': config.collector_addr,
                                'server.socket_port': config.collector_port,
+                               'engine.autoreload.on': False,
                                'log.screen': False,
                                'log.access_file': config.collector_access_log,
                                'log.error_file': config.collector_error_log}}
