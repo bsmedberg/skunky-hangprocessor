@@ -60,7 +60,7 @@ def generateReport(reportdir):
                            'error': True}
 
     loaddump('plugin')
-    for d in extra[u'additional_minidumps'].split(','):
+    for d in extra.get(u'additional_minidumps', '').split(','):
         if not okchars.match(d):
             continue
 
