@@ -1,0 +1,43 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+<head>
+  <title>Hang Reports: ${date.strftime('%Y-%m-%d')}</title>
+  <link rel="stylesheet" type="text/css" href="http://crash-analysis.mozilla.com/hang-reports/style.css" />
+</head>
+<body>
+  <h1>Hang Reports: ${date.strftime('%Y-%m-%d')}</h1>
+
+  <p>(${len(reports)} total hang reports.)</p>
+
+  <table class="data">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Submission Date</th>
+      <th>Version</th>
+      <th>BuildID</th>
+      <th>os</th>
+      <th>Plugin</th>
+      <th title="plugin-container hang signature">p-c signature</th>
+      <th title="firefox hang signature">firefox signature</th>
+      <th title="Flash broker signature">FP broker</th>
+      <th title="Flash sandboxed signature">FP sandboxed</th>
+    </tr>
+  </thead>
+  <tbody py:for="report in reports">
+    <tr>
+      <th><a href="${report.id}.html">${report.id}</a></th>
+      <td>${report.json['submitted_timestamp']}</td>
+      <td>${report.json.get('Version', '[none]')}</td>
+      <td>${report.json.get('BuildID', '[none]')}</td>
+      <td><py:if test="'plugin' in report.dumps">${report.dumps['plugin'].os}</py:if></td>
+      <td>${report.json.get('PluginFilename', '[none]')}</td>
+      <td><py:if test="'plugin' in report.dumps">${report.dumps['plugin'].signature}</py:if></td>
+      <td><py:if test="'browser' in report.dumps">${report.dumps['browser'].signature}</py:if></td>
+      <td><py:if test="'flash1' in report.dumps">${report.dumps['flash1'].signature}</py:if></td>
+      <td><py:if test="'flash2' in report.dumps">${report.dumps['flash2'].signature}</py:if></td>
+    </tr>
+  </tbody>
+  </table>
+</body>
+</html>
