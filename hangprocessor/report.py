@@ -71,4 +71,4 @@ def generateReport(reportdir):
 
 if __name__ == '__main__':
     reportdir, = sys.argv[1:]
-    generateReport(reportdir)
+    print generateReport(reportdir)
