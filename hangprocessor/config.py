@@ -30,6 +30,10 @@ opts.add_option(
     default=False,
     doc='Expose an HTML form for testing the collector.')
 opts.add_option(
+    'collector_root_redirect',
+    default='',
+    doc='URL to redirect non-POST requests to this server')
+opts.add_option(
     'collector_addr',
     default='0.0.0.0',
     doc='Address for the collector to bind to.')
