@@ -87,10 +87,12 @@ def getDumpInfo(basepath):
     for thread in threads:
         thread.finish()
 
-    if crashthread is not None:
-        signature = threads[crashthread].signature
-    else:
+    if crashthread is None:
         signature = "EMPTY: no crashing thread identified"
+    elif len(threads) <= crashthread:
+        signature = "EMPTY: no data for crashing thread"
+    else:
+        signature = threads[crashthread].signature
 
     return Dump(dumpos, signature, contents, False, threads, crashthread)
 
