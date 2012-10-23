@@ -1,7 +1,9 @@
 import os, sys
+from hangprocessor.config import getconfig
 
-queuedir = sys.argv[1]
-dirs = sys.argv[2:]
+queuedir = getconfig().processor_queue_path
+
+dirs = sys.argv[1:]
 
 for dir in dirs:
     dir = os.path.abspath(dir)
