@@ -23,16 +23,9 @@ def makeNightlyReport(config, date):
 
         dumps = {}
         def loadDump(name):
-            dumpfile = os.path.join(dumpdir,
-                                    'minidump_%s.dmp.processed' % name)
-            try:
-                contents = open(dumpfile)
-            except (OSError, IOError):
-                return
-
-            dumps[name] = getDumpInfo(contents)
-
-            contents.close()
+            basepath = os.path.join(dumpdir,
+                                    'minidump_%s.dmp' % name)
+            dumps[name] = getDumpInfo(basepath)
 
         loadDump('plugin')
         for d in extra.get(u'additional_minidumps', '').split(','):

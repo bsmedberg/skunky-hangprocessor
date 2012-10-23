@@ -3,6 +3,7 @@ import json
 import subprocess
 import time
 from report import generateReport
+import traceback
 
 class Processor(object):
     def __init__(self, config):
@@ -16,16 +17,21 @@ class Processor(object):
         errfd = open(errfile, 'wb')
 
         command = [self.config.minidump_stackwalk_path, '-m', dumpfile] + self.config.symbol_paths
-        r = subprocess.call(command, stdout=outfd, stderr=errfd)
+        p = subprocess.Popen(command, stdout=outfd, stderr=errfd)
         outfd.close()
-        if r == 0:
-            errfd.close()
-            os.unlink(errfile)
-        else:
-            errfd.seek(0, os.SEEK_END)
-            print >>errfd, "\n[minidump-stackwalk failed with code %i]" % r
-            errfd.close()
-            os.unlink(outfile)
+
+        def waitfunc():
+            r = p.wait()
+            if r == 0:
+                errfd.close()
+                os.unlink(errfile)
+            else:
+                errfd.seek(0, os.SEEK_END)
+                print >>errfd, "\n[minidump-stackwalk failed with code %i]" % r
+                errfd.close()
+                os.unlink(outfile)
+
+        return waitfunc
 
     def process(self, dumpdir):
         print "[%s] Processing %s" % (time.asctime(), dumpdir)
@@ -38,9 +44,9 @@ class Processor(object):
         if 'additional_minidumps' in extra:
             dumps.extend(extra['additional_minidumps'].split(','))
 
-        for dump in dumps:
-            dumpfile = os.path.join(dumpdir, 'minidump_%s.dmp' % dump)
-            self.processsingle(dumpfile)
+        waitfuncs = [self.processsingle(os.path.join(dumpdir, 'minidump_%s.dmp' % dump)) for dump in dumps]
+        for f in waitfuncs:
+            f()
 
         reportFile = os.path.join(dumpdir, 'report.html')
         fd = open(reportFile, 'w')
@@ -87,6 +93,7 @@ class Processor(object):
                 raise
             except Exception as e:
                 print "[%s] Error while processing dump '%s'. Skipping.: %s" % (time.asctime(), dumpdir, e)
+                traceback.print_exc(6)
                 continue
 
             os.unlink(linkpath)

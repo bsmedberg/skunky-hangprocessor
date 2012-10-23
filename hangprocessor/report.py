@@ -1,4 +1,5 @@
 import genshi.template, sys, os, json, re
+from signatures import getDumpInfo
 
 thisdir = os.path.dirname(__file__)
 tmpl = genshi.template.MarkupTemplate(open(os.path.join(thisdir, 'report.xhtml')))
@@ -49,15 +50,8 @@ def generateReport(reportdir):
 
     def loaddump(name):
         basepath = os.path.join(reportdir, 'minidump_%s.dmp' % name)
-
-        processedpath = basepath + '.processed'
-
-        if os.path.exists(processedpath):
-            dumps[name] = {'data': open(processedpath).read(),
-                           'error': False}
-        else:
-            dumps[name] = {'data': open(basepath + '.processingerror').read(),
-                           'error': True}
+        
+        dumps[name] = getDumpInfo(basepath)
 
     loaddump('plugin')
     for d in extra.get(u'additional_minidumps', '').split(','):

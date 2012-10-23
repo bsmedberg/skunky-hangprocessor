@@ -10,19 +10,52 @@ sigconfig.signatures_with_line_numbers_re = old.signaturesWithLineNumbersRegEx.d
 sigconfig.signature_sentinels = old.signatureSentinels.default
 c_tool = CSignatureTool(sigconfig)
 
-Dump = namedtuple('Dump', ('os', 'signature'))
+Dump = namedtuple('Dump', ('os', 'signature', 'contents', 'error', 'threads', 'crashthread'))
 
-def getDumpInfo(fd):
-    signatureList = []
+class Thread(object):
+    def __init__(self, thread_num):
+        self.thread_num = thread_num
+        self.frames = []
+
+    def append(self, thread_num, frame_num, module_name, function, source, source_line, instruction):
+        thread_num = int(thread_num)
+        frame_num = int(frame_num)
+
+        if thread_num != self.thread_num or frame_num != len(self.frames):
+            raise Exception("Mismatch length: got %i:%i expected %s:%s" % (thread_num, frame_num, self.thread_num, len(self.frames)))
+
+        normalized = c_tool.normalize_signature(module_name, function, source, source_line, instruction)
+
+        self.frames.append(Frame(frame_num, module_name, function, source, source_line, instruction, normalized))
+
+    def finish(self):
+        self.signature = c_tool.generate([frame.normalized for frame in self.frames][:30], -1, self.thread_num)[0]
+        
+Frame = namedtuple('Frame', ('frame_num', 'module_name', 'function', 'source', 'source_line', 'instruction', 'normalized'))
+
+def getDumpInfo(basepath):
+    processedpath = basepath + '.processed'
+
+    try:
+        contents = open(processedpath).read()
+    except (OSError, IOError):
+        errpath = basepath + '.processingerror'
+        try:
+            contents = open(errpath).read()
+        except (OSError, IOError):
+            contents = ''
+        return Dump(None, '<error>', contents, True, [], None)
+
     crashthread = None
     dumpos = None
-    for line in fd:
-        line = line.strip()
+
+    i = iter(contents.splitlines())
+    for line in i:
         items = map(emptyFilter, line.split('|'))
 
         key = items.pop(0)
         if key is None:
-            continue
+            break
 
         if key == 'OS':
             dumpos, osversion = items
@@ -32,19 +65,36 @@ def getDumpInfo(fd):
                 makelowercase = False
         elif key == 'Crash':
             reason, address, crashthread = items
-        elif key == crashthread:
-            frame_num, module_name, function, source, source_line, instruction = items
-            if int(frame_num) > 30:
-                continue
-            if makelowercase and module_name is not None:
-                module_name = module_name.lower()
-            signatureList.append(c_tool.normalize_signature(module_name, function, source, source_line, instruction))
+            if reason == 'No crash':
+                crashthread = '0'
+            crashthread = int(crashthread)
 
-    return Dump(dumpos, c_tool.generate(signatureList, -1, crashthread)[0])
+    threads = []
+    for line in i:
+        items = map(emptyFilter, line.split('|'))
+        if len(items) != 7:
+            continue
+
+        thread_num, frame_num, module_name, function, source, source_line, instruction = items
+        thread_num = int(thread_num)
+        while thread_num > len(threads) - 1:
+            threads.append(Thread(len(threads)))
+
+        if makelowercase and module_name is not None:
+            module_name = module_name.lower()
+        threads[-1].append(thread_num, frame_num, module_name, function, source, source_line, instruction)
+
+    for thread in threads:
+        thread.finish()
+
+    if crashthread is not None:
+        signature = threads[crashthread].signature
+    else:
+        signature = "EMPTY: no crashing thread identified"
+
+    return Dump(dumpos, signature, contents, False, threads, crashthread)
 
 if __name__ == '__main__':
     import sys
     for f in sys.argv[1:]:
-        fd = open(f)
-        print "%s: %r" % (f, getDumpInfo(fd))
-        fd.close()
+        print "%s: %r" % (f, getDumpInfo(f))

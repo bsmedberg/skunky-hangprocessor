@@ -7,8 +7,12 @@
 <body>
   <h1>Hang report ${id}</h1>
 
+  <p>${extra.get('ProductName', 'Unspecified product')} version ${extra.get('Version', 'unspecified')}
+    <br/>BuildId: ${extra.get('BuildID', 'unspecified')}
+    <br/>Plugin: ${extra.get('PluginFilename', 'unspecified')}</p>
+
   <section>
-    <h2>Metadata</h2>
+    <h2 class="expando collapsed">Metadata</h2>
 
     <table class="data">
       <tbody>
@@ -22,10 +26,42 @@
     <p>Hidden metadata: ${','.join(set(extra.iterkeys()).difference(whitelist)) or '&lt;none&gt;'}</p>
   </section>
 
-  <section py:def="displaydump(name, dump)">
+  <section py:def="displaydump(name, dump)" class="dumpsection">
     <h3>Dump: ${name}</h3>
-    <p class="error" py:if="dump['error']">Error processing dump:</p>
-    <pre class="dumpdata">${dump['data']}</pre>
+    <p py:if="dump.signature">Signature: ${dump.signature}</p>
+    <p class="error" py:if="dump.error">Error processing dump:</p>
+
+    <section>
+      <h4 class="expando collapsed">Frames</h4>
+      <table class="data dumpthreads" data-crashthread="${dump.crashthread}">
+        <thead>
+          <tr>
+            <th>Thread</th>
+            <th>Frame</th>
+            <td>Function</td>
+            <td>Source</td>
+          </tr>
+        </thead>
+        <tbody>
+          <py:for each="thread in dump.threads">
+            <tr class="threadhead" data-threadid="${thread.thread_num}">
+              <th rowspan="${len(thread.frames) + 1}" class="threadid">${thread.thread_num}</th>
+              <td colspan="3">${thread.signature}</td>
+            </tr>
+            <tr py:for="frame in thread.frames">
+              <th>${frame.frame_num}</th>
+              <td>${frame.normalized}</td>
+              <td>${frame.source}:${frame.source_line}</td>
+            </tr>
+          </py:for>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h4 class="expando collapsed">Dump Contents</h4>
+      <pre class="dumpcontents">${dump.contents}</pre>
+    </section>
   </section>
 
   <section>
@@ -38,6 +74,9 @@
   </section>
 
   <p><a href="http://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
+
+  <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/jquery-1.8.2.min.js" />
+  <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/common.js" />
 
 </body>
 </html>
