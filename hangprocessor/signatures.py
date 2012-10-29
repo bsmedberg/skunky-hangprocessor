@@ -12,6 +12,16 @@ c_tool = CSignatureTool(sigconfig)
 
 Dump = namedtuple('Dump', ('os', 'signature', 'contents', 'error', 'threads', 'crashthread'))
 
+class ThreadList(dict):
+    def ensure(self, threadnum):
+        if not threadnum in self:
+            self[threadnum] = Thread(threadnum)
+
+    def __iter__(self):
+        l = self.keys()
+        l.sort()
+        return (self[k] for k in l)
+
 class Thread(object):
     def __init__(self, thread_num):
         self.thread_num = thread_num
@@ -69,7 +79,7 @@ def getDumpInfo(basepath):
                 crashthread = '0'
             crashthread = int(crashthread)
 
-    threads = []
+    threads = ThreadList()
     for line in i:
         items = map(emptyFilter, line.split('|'))
         if len(items) != 7:
@@ -77,19 +87,19 @@ def getDumpInfo(basepath):
 
         thread_num, frame_num, module_name, function, source, source_line, instruction = items
         thread_num = int(thread_num)
-        while thread_num > len(threads) - 1:
-            threads.append(Thread(len(threads)))
+        if not thread_num in threads:
+            threads[thread_num] = Thread(thread_num)
 
         if makelowercase and module_name is not None:
             module_name = module_name.lower()
-        threads[-1].append(thread_num, frame_num, module_name, function, source, source_line, instruction)
+        threads[thread_num].append(thread_num, frame_num, module_name, function, source, source_line, instruction)
 
     for thread in threads:
         thread.finish()
 
     if crashthread is None:
         signature = "EMPTY: no crashing thread identified"
-    elif len(threads) <= crashthread:
+    elif not crashthread in threads:
         signature = "EMPTY: no data for crashing thread"
     else:
         signature = threads[crashthread].signature
