@@ -1,8 +1,8 @@
-import os, json
+import os, json, sys
 from signatures import getDumpInfo
 from config import getconfig
 from collections import namedtuple
-import datetime
+from datetime import timedelta
 import itertools
 
 config = getconfig()
@@ -34,16 +34,25 @@ def getReportsForDate(date):
 
     return reports
 
-def getReportsForDateRange(startdate, enddate, filters):
+def filterReportsForDateRange(startdate, enddate, filters):
+    """
+    Pass reports for a date range through a list of filter functions.
+    Each report is passed to filters and returned from this function as
+    (Report, {}) so that filters can pass processing data to further filters
+    or for the final result.
+    """
+
     reports = []
     
     date = startdate
-    while startdate <= enddate:
-        datereports = getReportsForDate(date)
+    while date <= enddate:
+        datereports = ((report, {}) for report in getReportsForDate(date))
         
         for filter in filters:
             datereports = itertools.ifilter(filter, datereports)
 
         reports.extend(datereports)
+
+        date = startdate + timedelta(days=1)
 
     return reports
