@@ -1,8 +1,8 @@
 import genshi.template, sys, os, subprocess
-import datetime
 from signatures import getDumpInfo
 import query
 from config import getconfig
+from classifier import classifierFilters
 
 config = getconfig()
 
@@ -10,9 +10,9 @@ thisdir = os.path.dirname(__file__)
 tmpl = genshi.template.MarkupTemplate(open(os.path.join(thisdir, 'nightly.xhtml')))
 
 def makeNightlyReport(date):
-    reports = query.getReportsForDate(date)
+    reports = query.filterReportsForDateRange(date, date, classifierFilters)
 
-    reports.sort(key=lambda d: d.json['submitted_timestamp'])
+    reports.sort(key=lambda d: d[0].json['submitted_timestamp'])
 
     s = tmpl.generate(date=date, reports=reports)
 
@@ -35,6 +35,25 @@ def makeNightlyReport(date):
         fd.close()
 
 if __name__ == '__main__':
-    date, = sys.argv[1:]
-    date = datetime.datetime.strptime(date, '%Y-%m-%d')
-    makeNightlyReport(date)
+    from datetime import datetime, timedelta
+    from optparse import OptionParser
+
+    yesterday = datetime.now() - timedelta(days=1)
+    
+    o = OptionParser("usage: %prog [options]")
+    o.add_option('--start-date', '-s', dest='startdate', metavar="YYYY-MM-DD", default=yesterday.strftime('%Y-%m-%d'))
+    o.add_option('--end-date', '-e', dest='enddate', metavar="YYYY-MM-DD", default=yesterday.strftime('%Y-%m-%d'))
+
+    opts, args = o.parse_args()
+
+    if len(args):
+        o.print_help()
+        sys.exit(1)
+
+    startdate = datetime.strptime(opts.startdate, '%Y-%m-%d')
+    enddate = datetime.strptime(opts.enddate, '%Y-%m-%d')
+
+    date = startdate
+    while date <= enddate:
+        makeNightlyReport(date)
+        date += timedelta(days=1)

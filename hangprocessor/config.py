@@ -82,8 +82,7 @@ def _get_dir_list(p, name):
 def getconfig():
     cm = ConfigurationManager(opts,
                               values_source_list=('/etc/hangprocessor.ini',
-                                                  os.path.expanduser('~/hangprocessor.ini'),
-                                                  getopt))
+                                                  os.path.expanduser('~/hangprocessor.ini')))
     config = cm.get_config()
     
     # Validate the config

@@ -1,3 +1,6 @@
+<?python
+import datetime
+?>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/">
 <head>
@@ -73,7 +76,10 @@
     </py:for>
   </section>
 
-  <p><a href="http://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
+  <section id="footer">
+    <p><a href="http://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
+    <p>Generated on ${datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%m UTC')}.</p>
+  </section>
 
   <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/jquery-1.8.2.min.js" />
   <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/common.js" />
