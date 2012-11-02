@@ -11,7 +11,31 @@ import datetime
 <body>
   <h1>Hang Reports: ${date.strftime('%Y-%m-%d')}</h1>
 
+  <h2>Classifications</h2>
+
+  <table class="data">
+  <tbody>
+    <tr py:for="classification, count in classifications.iteritems()" py:if="classification is not None">
+      <td>${classification}</td>
+      <td>${count} (${int(float(count) / len(reports) * 100)}%)</td>
+    </tr>
+    <tr py:if="None in classifications" py:with="count=classifications[None]">
+      <td><em>Unclassified</em></td>
+      <td>${count} (${int(float(count) / len(reports) * 100)}%)</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <th>Total</th>
+      <td>${len(reports)}</td>
+    </tr>
+  </tfoot>
+  </table>
+
   <p>(${len(reports)} total hang reports.)</p>
+
+
+  <h2>List</h2>
 
   <table class="data">
   <thead>
@@ -37,7 +61,9 @@ import datetime
       <td>${report.json.get('BuildID', '[none]')}</td>
       <td><py:if test="'plugin' in report.dumps">${report.dumps['plugin'].os}</py:if></td>
       <td>${report.json.get('PluginFilename', '[none]')}</td>
-      <td><py:if test="'classifiedas' in metadict">${metadict['classifiedas']}<py:if test="'classifydata' in metadict">/${metadict['classifydata']}</py:if></py:if></td>
+      <td><py:if test="'classifiedas' in metadict">${metadict['classifiedas']}
+          <py:if test="'classifydata' in metadict"><br/>${metadict['classifydata']}</py:if>
+      </py:if></td>
       <td><py:if test="'plugin' in report.dumps">${report.dumps['plugin'].signature}</py:if></td>
       <td><py:if test="'browser' in report.dumps">${report.dumps['browser'].signature}</py:if></td>
       <td><py:if test="'flash1' in report.dumps">${report.dumps['flash1'].signature}</py:if></td>
