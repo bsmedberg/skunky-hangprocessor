@@ -43,7 +43,7 @@ if __name__ == '__main__':
     from datetime import datetime, timedelta
     from optparse import OptionParser
 
-    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = datetime.utcnow() - timedelta(days=1)
     
     o = OptionParser("usage: %prog [options]")
     o.add_option('--start-date', '-s', dest='startdate', metavar="YYYY-MM-DD", default=yesterday.strftime('%Y-%m-%d'))
