@@ -10,7 +10,7 @@ sigconfig.signatures_with_line_numbers_re = old.signaturesWithLineNumbersRegEx.d
 sigconfig.signature_sentinels = old.signatureSentinels.default
 c_tool = CSignatureTool(sigconfig)
 
-Dump = namedtuple('Dump', ('os', 'signature', 'contents', 'error', 'threads', 'crashthread'))
+Dump = namedtuple('Dump', ('os', 'signature', 'contents', 'error', 'threads', 'crashthread', 'cpu'))
 
 class ThreadList(dict):
     def ensure(self, threadnum):
@@ -54,10 +54,11 @@ def getDumpInfo(basepath):
             contents = open(errpath).read()
         except (OSError, IOError):
             contents = ''
-        return Dump(None, '<error>', contents, True, [], None)
+        return Dump(None, '<error>', contents, True, [], None, None)
 
     crashthread = None
     dumpos = None
+    dumpcpu = None
 
     i = iter(contents.splitlines())
     for line in i:
@@ -73,6 +74,8 @@ def getDumpInfo(basepath):
                 makelowercase = True
             else:
                 makelowercase = False
+        elif key == 'CPU':
+            dumpcpu, family, cores = items
         elif key == 'Crash':
             reason, address, crashthread = items
             if reason == 'No crash':
@@ -104,7 +107,7 @@ def getDumpInfo(basepath):
     else:
         signature = threads[crashthread].signature
 
-    return Dump(dumpos, signature, contents, False, threads, crashthread)
+    return Dump(dumpos, signature, contents, False, threads, crashthread, dumpcpu)
 
 if __name__ == '__main__':
     import sys
