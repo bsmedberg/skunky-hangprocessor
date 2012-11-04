@@ -48,12 +48,16 @@ def filterUnwantedReports(i):
         return False
 
     if 'plugin' not in report.dumps:
-        metadict['error'] = True
-    else:
-        for dump in report.dumps.itervalues():
-            if dump.error or not dump.crashthread in dump.threads:
-                metadict['error'] = True
-                break
+        return False
+
+    if report.dumps['plugin'].cpu == 'amd64':
+        return False
+
+    for dump in report.dumps.itervalues():
+        if dump.error or not dump.crashthread in dump.threads:
+            metadict['error'] = True
+            metadict['classifiedas'] = 'processing-error'
+            break
 
     return True
 
@@ -99,7 +103,67 @@ def classifyUpdateWindowAttributes(i):
 
     return True
 
+def topOfStackContains(stack, signature):
+    for i in xrange(0, min(len(stack.frames), 5)):
+        if stack.frames[i].normalized.startswith(signature):
+            return True
+
+    return False
+
+def classifySetWindowPos(i):
+    report, metadict = i
+
+    if metadict['error'] or 'classifiedas' in metadict:
+        return True
+
+    pdump = report.dumps['plugin']
+    crashthread = pdump.threads[pdump.crashthread]
+    if topOfStackContains(crashthread, 'NtUserSetWindowPos'):
+        if topOfStackContains(crashthread, 'F_320940052'):
+            c = 'NtUserSetWindowPos | F_320940052'
+        elif topOfStackContains(crashthread, 'F_1378698112'):
+            c = 'NtUserSetWindowPos | F_1378698112'
+        elif topOfStackContains(crashthread, 'F_468782153'):
+            c = 'NtUserSetWindowPos | F_468782153'
+        else:
+            c = 'NtUserSetWindowPos | other'
+
+        metadict['classifiedas'] = c
+        return True
+
+    if not 'flash2' in report.dumps:
+        return True
+
+    dump = report.dumps['flash2']
+    crashthread = dump.threads[dump.crashthread]
+    if topOfStackContains(crashthread, 'NtUserSetWindowPos'):
+        if topOfStackContains(crashthread, 'F455544145'):
+            c = 'NtUserSetWindowPos | F455544145'
+        else:
+            c = 'NtUserSetWindowPos | other'
+        metadict['classifiedas'] = c
+
+    return True
+
+def classifySendWaitReceivePort(i):
+    report, metadict = i
+
+    if metadict['error'] or 'classifiedas' in metadict:
+        return True
+
+    if not 'flash2' in report.dumps:
+        return True
+
+    dump = report.dumps['flash2']
+    crashthread = dump.threads[dump.crashthread]
+    if topOfStackContains(crashthread, 'NtAlpcSendWaitReceivePort'):
+        metadict['classifiedas'] = 'NtAlpcSendWaitReceivePort'
+
+    return True
+
 classifierFilters = [
     filterUnwantedReports,
-    classifyUpdateWindowAttributes
+    classifyUpdateWindowAttributes,
+    classifySetWindowPos,
+    classifySendWaitReceivePort,
 ]

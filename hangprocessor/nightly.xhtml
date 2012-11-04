@@ -15,11 +15,11 @@ import datetime
 
   <table class="data">
   <tbody>
-    <tr py:for="classification, count in classifications.iteritems()" py:if="classification is not None">
+    <tr py:for="classification, count in classifications">
       <td>${classification}</td>
       <td>${count} (${int(float(count) / len(reports) * 100)}%)</td>
     </tr>
-    <tr py:if="None in classifications" py:with="count=classifications[None]">
+    <tr py:if="unclassified != 0" py:with="count=unclassified">
       <td><em>Unclassified</em></td>
       <td>${count} (${int(float(count) / len(reports) * 100)}%)</td>
     </tr>

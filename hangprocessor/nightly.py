@@ -14,12 +14,19 @@ def makeNightlyReport(date):
 
     reports.sort(key=lambda d: d[0].json['submitted_timestamp'])
 
+    unclassified = 0
     classifications = {}
     for report, metadict in reports:
         key = metadict.get('classifiedas', None)
-        classifications[key] = classifications.get(key, 0) + 1
+        if key is None:
+            unclassified += 1
+        else:
+            classifications[key] = classifications.get(key, 0) + 1
 
-    s = tmpl.generate(date=date, reports=reports, classifications=classifications)
+    classifications = classifications.items()
+    classifications.sort(reverse=True, key=lambda i: i[1])
+
+    s = tmpl.generate(date=date, reports=reports, classifications=classifications, unclassified=unclassified)
 
     dailydir = os.path.join(config.minidump_storage_path, str(date.year),
                             date.strftime('%m-%d'))
