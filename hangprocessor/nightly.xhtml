@@ -6,7 +6,7 @@ import datetime
 
 <head>
   <title>Hang Reports: ${date.strftime('%Y-%m-%d')}</title>
-  <link rel="stylesheet" type="text/css" href="http://crash-analysis.mozilla.com/hang-reports/style.css" />
+  <link rel="stylesheet" type="text/css" href="https://crash-analysis.mozilla.com/hang-reports/style.css" />
 </head>
 <body>
   <h1>Hang Reports: ${date.strftime('%Y-%m-%d')}</h1>
@@ -36,6 +36,8 @@ import datetime
 
 
   <h2>List</h2>
+
+  <p class="filterp"><input class="tablefilter" type="text" size="60" value="" placeholder="Filter reports" /> <span class="filtertotal"/></p>
 
   <table class="data">
   <thead>
@@ -73,9 +75,12 @@ import datetime
   </table>
 
   <section id="footer">
-    <p><a href="http://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
+    <p><a href="https://crash-analysis.mozilla.com/hang-reports/">More information about hang reports.</a></p>
     <p>Generated on ${datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%m UTC')}.</p>
   </section>
+
+  <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/jquery-1.8.2.min.js" />
+  <script type="text/javascript" src="https://crash-analysis.mozilla.com/hang-reports/common.js" />
 
 </body>
 </html>
