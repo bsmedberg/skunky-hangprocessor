@@ -161,9 +161,24 @@ def classifySendWaitReceivePort(i):
 
     return True
 
+def classifyBug811804(i):
+    report, metadict = i
+    if metadict['error'] or 'classifiedas' in metadict:
+        return True
+
+    if not 'flash2' in report.dumps:
+        return True
+
+    dump = report.dumps['flash2']
+    if dump.signature == 'hang | NtUserWaitMessage | F340331645________________________________':
+        metadict['classifiedas'] = 'bug811804-NtUserWaitMessage'
+
+    return True
+
 classifierFilters = [
     filterUnwantedReports,
     classifyUpdateWindowAttributes,
     classifySetWindowPos,
     classifySendWaitReceivePort,
+    classifyBug811804,
 ]
