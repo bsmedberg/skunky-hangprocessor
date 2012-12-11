@@ -103,8 +103,8 @@ def classifyUpdateWindowAttributes(i):
 
     return True
 
-def topOfStackContains(stack, signature):
-    for i in xrange(0, min(len(stack.frames), 5)):
+def topOfStackContains(stack, signature, frameCount=5):
+    for i in xrange(0, min(len(stack.frames), frameCount)):
         if stack.frames[i].normalized.startswith(signature):
             return True
 
@@ -175,10 +175,29 @@ def classifyBug811804(i):
 
     return True
 
+def classifyBug812318(i):
+    report, metadict = i
+    if metadict['error'] or 'classifiedas' in metadict:
+        return True
+
+    if not 'flash2' in report.dumps:
+        return True
+
+    dump = report.dumps['flash2']
+    crashthread = dump.threads[dump.crashthread]
+    if topOfStackContains(crashthread, 'NtUserPeekMessage'):
+        if topOfStackContains(crashthread, 'F849276792______________________________'):
+            metadict['classifiedas'] = 'bug812318-PeekMessage'
+        else:
+            metadict['classifiedas'] = 'NtUserPeekMessage-other'
+
+    return True
+
 classifierFilters = [
     filterUnwantedReports,
     classifyUpdateWindowAttributes,
     classifySetWindowPos,
     classifySendWaitReceivePort,
     classifyBug811804,
+    classifyBug812318,
 ]
